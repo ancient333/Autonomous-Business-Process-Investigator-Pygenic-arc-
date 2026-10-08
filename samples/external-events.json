@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "event_id": "aaaa1111-1111-4111-8111-111111111111",
+      "timestamp": "2026-10-08T12:00:00Z",
+      "worker_id": "partner-production-station",
+      "process_stage": "Production",
+      "order_id": "bbbb2222-2222-4222-8222-222222222222",
+      "correlation_id": "cccc3333-3333-4333-8333-333333333333",
+      "operation": "record_batch_completion",
+      "status": "error",
+      "duration_ms": 460.4,
+      "error_type": "LockNotAvailable",
+      "error_message": "Example external log: canceling statement due to lock timeout",
+      "source": "sample-file-unverified",
+      "metadata": {
+        "sqlstate": "55P03",
+        "example": true
+      }
+    }
+  ]
+}

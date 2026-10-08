@@ -1,0 +1,80 @@
+name: rootlens-manufacturing
+x-backend: &backend
+  build: .
+  environment:
+    DATABASE_URL: postgresql://${POSTGRES_USER:-rootlens}:${POSTGRES_PASSWORD:-rootlens_local}@db:5432/${POSTGRES_DB:-rootlens}
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+services:
+  db:
+    image: postgres:16.8-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rootlens}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rootlens_local}
+      POSTGRES_DB: ${POSTGRES_DB:-rootlens}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  api:
+    <<: *backend
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  engine:
+    <<: *backend
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "-m", "backend.engine"]
+  materials:
+    <<: *backend
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "-m", "backend.worker"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rootlens}:${POSTGRES_PASSWORD:-rootlens_local}@db:5432/${POSTGRES_DB:-rootlens}
+      WORKER_ID: A
+  production:
+    <<: *backend
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "-m", "backend.worker"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rootlens}:${POSTGRES_PASSWORD:-rootlens_local}@db:5432/${POSTGRES_DB:-rootlens}
+      WORKER_ID: B
+  quality:
+    <<: *backend
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "-m", "backend.worker"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rootlens}:${POSTGRES_PASSWORD:-rootlens_local}@db:5432/${POSTGRES_DB:-rootlens}
+      WORKER_ID: C
+  web:
+    build: ./frontend
+    ports: ["127.0.0.1:8080:80"]
+    depends_on:
+      api:
+        condition: service_healthy
+  test:
+    <<: *backend
+    profiles: ["test"]
+    command: ["pytest", "-q", "tests"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rootlens}:${POSTGRES_PASSWORD:-rootlens_local}@db:5432/${POSTGRES_DB:-rootlens}
+volumes:
+  pgdata:
