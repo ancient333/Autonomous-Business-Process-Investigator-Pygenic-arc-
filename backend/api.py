@@ -22,12 +22,26 @@ async def db_error(request:Request, exc):
     return JSONResponse(status_code=503,content={'detail':'Database unavailable. Check the db service and connection configuration.'})
 
 # Prevent browser cross-origin mutations against an unauthenticated local demo.
+
 @app.middleware('http')
-async def local_origin(request:Request, call_next):
-    origin=request.headers.get('origin')
-    if request.method not in ('GET','HEAD','OPTIONS') and origin and origin not in ('http://localhost:8080','http://127.0.0.1:8080','http://localhost:5173','http://127.0.0.1:5173'):
-        return JSONResponse(status_code=403,content={'detail':'Only the local workspace may change the demo.'})
+async def local_origin(request: Request, call_next):
+    origin = request.headers.get('origin')
+    allowed_origins = (
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://autonomous-business-process-investi.vercel.app',
+        'https://autonomous-business-process-investigator-pygenic-ofqtt8s5x.vercel.app',
+        'https://autonomous-business-process-investigato-git-c7f828-akshaya-5742.vercel.app',
+    )
+    if request.method not in ('GET', 'HEAD', 'OPTIONS') and origin and origin not in allowed_origins:
+        return JSONResponse(
+            status_code=403,
+            content={'detail': 'Origin not allowed.'}
+        )
     return await call_next(request)
+
 
 class Control(BaseModel):
     action:Literal['start','stop','recover']
