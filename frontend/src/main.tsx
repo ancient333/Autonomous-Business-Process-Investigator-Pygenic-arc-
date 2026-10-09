@@ -7,7 +7,25 @@ type Row=Record<string,any>;
 const time=(v:string)=>new Date(v).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const short=(v:any)=>String(v??'—').slice(0,8);
 const json=(v:any)=>typeof v==='object'?JSON.stringify(v):String(v??'—');
-async function api(path:string,body?:any){const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(10000)});const data=await r.json();if(!r.ok)throw Error(typeof data.detail==='string'?data.detail:JSON.stringify(data.detail));return data}
+
+const API_BASE = 'https://autonomous-business-process-investigator-7kcb.onrender.com';
+
+async function api(path: string, body?: any) {
+  const r = await fetch(`${API_BASE}/api/${path}`, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(10000)
+  });
+  const data = await r.json();
+  if (!r.ok) throw Error(
+    typeof data.detail === 'string'
+      ? data.detail
+      : JSON.stringify(data.detail)
+  );
+  return data;
+}
+
 function usePoll(path:string,delay=2000){const [data,setData]=useState<any>(null),[error,setError]=useState('');useEffect(()=>{let active=true,t:ReturnType<typeof setTimeout>;setData(null);async function run(){try{const d=await api(path);if(active){setData(d);setError('')}}catch(e){if(active)setError((e as Error).message)}finally{if(active)t=setTimeout(run,delay)}}run();return()=>{active=false;clearTimeout(t)}},[path,delay]);return {data,error}}
 function Badge({children,kind=''}:{children:React.ReactNode,kind?:string}){return <span className={'badge '+kind}><i/>{children}</span>}
 function Events({items}:{items:Row[]}){return <div className="tablewrap"><table><thead><tr><th>Time / UTC stored</th><th>Worker / stage</th><th>Order</th><th>Observation</th><th>Duration</th><th>Evidence</th></tr></thead><tbody>{items.map(e=><tr key={e.event_id}><td>{time(e.timestamp)}</td><td>{e.worker_id} / {e.process_stage}</td><td title={e.order_id}>{short(e.order_id)}</td><td><Badge kind={e.status==='error'?'amber':''}>{e.status}</Badge><small>{e.error_type||e.operation}</small></td><td>{e.duration_ms.toFixed(1)} ms</td><td>{e.investigation_id?<a href={'#workspace/investigation/'+e.investigation_id}>Investigate ↗</a>:<span className="muted">{e.detectors?.join(' · ')||'Recorded'}</span>}</td></tr>)}</tbody></table>{!items.length&&<p className="empty">No matching events. Start the workload to collect real observations.</p>}</div>}
