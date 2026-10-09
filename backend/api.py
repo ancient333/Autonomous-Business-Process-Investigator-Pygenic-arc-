@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 import json
 import uuid
 from datetime import datetime
