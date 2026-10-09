@@ -9,7 +9,6 @@ const short=(v:any)=>String(v??'—').slice(0,8);
 const json=(v:any)=>typeof v==='object'?JSON.stringify(v):String(v??'—');
 
 const API_BASE = 'https://autonomous-business-process-investigator-7kcb.onrender.com';
-
 async function api(path: string, body?: any) {
   const r = await fetch(`${API_BASE}/api/${path}`, {
     method: body ? 'POST' : 'GET',
