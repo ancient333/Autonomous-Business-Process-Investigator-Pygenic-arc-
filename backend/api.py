@@ -34,6 +34,7 @@ async def local_origin(request: Request, call_next):
         'https://autonomous-business-process-investi.vercel.app',
         'https://autonomous-business-process-investigator-pygenic-ofqtt8s5x.vercel.app',
         'https://autonomous-business-process-investigato-git-c7f828-akshaya-5742.vercel.app',
+        'https://autonomous-business-process-investi.vercel.app',
     )
     if request.method not in ('GET', 'HEAD', 'OPTIONS') and origin and origin not in allowed_origins:
         return JSONResponse(
