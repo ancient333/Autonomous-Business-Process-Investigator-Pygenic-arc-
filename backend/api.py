@@ -17,7 +17,17 @@ async def lifespan(app):
     yield
 
 app=FastAPI(title='Pygenic Arc manufacturing investigator',version='2.0.0',lifespan=lifespan,docs_url='/api/docs',openapi_url='/api/openapi.json')
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://autonomous-business-process-investi.vercel.app",
+        "https://autonomous-business-process-investigator-pygenic-ofqtt8s5x.vercel.app",
+        "https://autonomous-business-process-investigato-git-c7f828-akshaya-5742.vercel.app",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
 @app.exception_handler(psycopg.Error)
 async def db_error(request:Request, exc):
     return JSONResponse(status_code=503,content={'detail':'Database unavailable. Check the db service and connection configuration.'})
